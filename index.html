@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dynamic Polygon Bet Hub</title>
+    <title>Split Screen Bet Hub Mobile</title>
     <style>
         * {
             box-sizing: border-box;
@@ -32,13 +32,14 @@
             display: flex;
             align-items: center;
             gap: 4px;
-            z-index: 50;
+            z-index: 100;
         }
 
         .util-btn {
-            background: #2c2c2e;
+            background: rgba(44, 44, 46, 0.8);
+            backdrop-filter: blur(4px);
             color: #fff;
-            border: 1px solid #3a3a3c;
+            border: 1px solid rgba(255,255,255,0.2);
             padding: 4px 8px;
             font-size: 9px;
             font-weight: 700;
@@ -49,31 +50,58 @@
 
         .timer-banner {
             font-size: 9px;
-            color: #8e8e93;
-            background: rgba(255,255,255,0.07);
+            color: #fff;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
             padding: 4px 6px;
             border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.2);
         }
 
-        /* Central Betting Arena / Pot */
+        /* Pizza-Slice Container */
+        .slices-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        /* Sector Slice */
+        .slice {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200vw;
+            height: 200vh;
+            transform-origin: 0 0;
+            pointer-events: auto;
+            border: 1px solid rgba(0,0,0,0.3);
+            transition: background 0.3s ease;
+        }
+
+        /* Central Arena / Pot */
         .central-arena {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 120px;
-            height: 120px;
+            width: 110px;
+            height: 110px;
             background: #151518;
-            border: 2px solid #3a3a3c;
+            border: 3px solid #3a3a3c;
             border-radius: 50%;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 30;
+            z-index: 50;
             box-shadow: 0 0 25px rgba(0,0,0,0.9);
             padding: 6px;
             text-align: center;
+            transition: transform 0.2s ease;
         }
 
         .pot-title {
@@ -84,10 +112,10 @@
         }
 
         .pot-amount {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 800;
             color: #ffcc00;
-            margin: 1px 0 4px 0;
+            margin: 1px 0 2px 0;
         }
 
         .pot-actions {
@@ -99,8 +127,8 @@
         }
 
         .pot-actions button {
-            padding: 2px 4px;
-            font-size: 7px;
+            padding: 2px 3px;
+            font-size: 6px;
             font-weight: 700;
             border-radius: 3px;
             border: none;
@@ -110,7 +138,7 @@
         .btn-add-player {
             background: #34c759;
             color: #fff;
-            margin-top: 3px;
+            margin-top: 2px;
             width: 100%;
             padding: 2px;
             font-size: 7px;
@@ -120,7 +148,7 @@
             cursor: pointer;
         }
 
-        /* Dynamic Player Slot Containers */
+        /* Player Controls Box positioned inside each sector */
         .player-slot {
             position: absolute;
             display: flex;
@@ -128,10 +156,14 @@
             justify-content: center;
             align-items: center;
             padding: 6px;
-            width: 160px;
-            height: 125px;
+            width: 155px;
+            height: 115px;
             border-radius: 10px;
-            z-index: 10;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255,255,255,0.25);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
         }
 
         .player-header {
@@ -143,32 +175,34 @@
 
         .player-name {
             font-size: 10px;
-            font-weight: 600;
-            background: none;
-            border: none;
+            font-weight: 700;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 1px 6px;
+            border-radius: 4px;
             color: #fff;
             text-align: center;
-            width: 80px;
-            border-bottom: 1px dashed transparent;
+            width: 85px;
         }
-        .player-name:focus { border-bottom: 1px dashed #fff; outline: none; }
+        .player-name:focus { outline: none; border-color: #fff; }
 
         .btn-delete {
-            background: #ff3b30;
+            background: rgba(0,0,0,0.5);
             color: #fff;
             border: none;
             border-radius: 3px;
             font-size: 7px;
-            padding: 1px 3px;
+            padding: 2px 4px;
             cursor: pointer;
             font-weight: bold;
         }
 
         .balance {
             font-size: 18px;
-            font-weight: 800;
+            font-weight: 900;
             letter-spacing: -0.5px;
             margin-bottom: 3px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.4);
         }
 
         .action-row {
@@ -184,10 +218,11 @@
             border-radius: 4px;
             border: none;
             font-size: 8px;
-            font-weight: 700;
+            font-weight: 800;
             cursor: pointer;
-            background: #2c2c2e;
+            background: rgba(0, 0, 0, 0.4);
             color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
         }
         .btn-action:active { opacity: 0.7; }
         .btn-action:disabled { opacity: 0.3; cursor: not-allowed; }
@@ -198,10 +233,15 @@
             border-radius: 4px;
             border: none;
             font-size: 9px;
-            font-weight: 700;
+            font-weight: 800;
             cursor: pointer;
-            background: #3a3a3c;
+            background: rgba(0, 0, 0, 0.5);
             color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-ready.ready {
+            background: #ffffff !important;
+            color: #000 !important;
         }
     </style>
 </head>
@@ -221,16 +261,19 @@
         <button class="btn-add-player" id="addPlayerBtn" onclick="addPlayer()">+ Add Player</button>
     </div>
 
-    <!-- Dynamic Slots Container -->
+    <!-- Pizza Slices Background Container -->
+    <div class="slices-container" id="slicesContainer"></div>
+
+    <!-- Dynamic Player Slots Container -->
     <div id="playersContainer"></div>
 
     <script>
-        const THEMES = [
-            { bg: "linear-gradient(135deg, #3a1c1c 0%, #151518 100%)", border: "#ff3b30", btn: "#ff3b30" }, // Red (Player 1)
-            { bg: "linear-gradient(135deg, #1c2c3a 0%, #151518 100%)", border: "#007aff", btn: "#007aff" }, // Blue (Player 2)
-            { bg: "linear-gradient(135deg, #3a321c 0%, #151518 100%)", border: "#ff9500", btn: "#ff9500" }, // Custom 1
-            { bg: "linear-gradient(135deg, #1c3a27 0%, #151518 100%)", border: "#34c759", btn: "#34c759" }, // Custom 2
-            { bg: "linear-gradient(135deg, #2c1c3a 0%, #151518 100%)", border: "#af52de", btn: "#af52de" }  // Custom 3
+        const TEAM_THEMES = [
+            { bg: "linear-gradient(135deg, #991b1b 0%, #450a0a 100%)", solid: "#7f1d1d" }, // Red
+            { bg: "linear-gradient(135deg, #1e40af 0%, #172554 100%)", solid: "#1e3a8a" }, // Blue
+            { bg: "linear-gradient(135deg, #c2410c 0%, #431407 100%)", solid: "#9a3412" }, // Orange
+            { bg: "linear-gradient(135deg, #166534 0%, #052e16 100%)", solid: "#14532d" }, // Green
+            { bg: "linear-gradient(135deg, #6b21a8 0%, #3b0764 100%)", solid: "#581c87" }  // Purple
         ];
 
         let state = {
@@ -247,16 +290,17 @@
             checkDailyRefill();
             updateUI();
             setInterval(updateTimerDisplay, 1000);
+            window.addEventListener('resize', updateUI);
         };
 
         function saveState() {
             try {
-                localStorage.setItem('dynamic_polygon_hub_state', JSON.stringify(state));
+                localStorage.setItem('split_screen_bet_hub_state', JSON.stringify(state));
             } catch(e) { console.error(e); }
         }
 
         function loadState() {
-            const saved = localStorage.getItem('dynamic_polygon_hub_state');
+            const saved = localStorage.getItem('split_screen_bet_hub_state');
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
@@ -357,9 +401,11 @@
         function addPlayer() {
             if (state.players.length >= 5) return;
             const newId = Date.now();
+            const count = state.players.length;
+            let defaultNames = ["", "", "Orange Player", "Green Player", "Purple Player"];
             state.players.push({
                 id: newId,
-                name: `Player ${state.players.length + 1}`,
+                name: defaultNames[count] || `Player ${count + 1}`,
                 balance: 1000,
                 contributed: 0,
                 ready: false,
@@ -373,7 +419,7 @@
             let idx = state.players.findIndex(p => p.id === id);
             if (idx === -1 || state.players[idx].fixed) return;
 
-            let p = state.players.find(x => x.id === id);
+            let p = state.players[idx];
             if (p.contributed > 0) {
                 p.balance += p.contributed;
                 state.pot -= p.contributed;
@@ -385,38 +431,46 @@
         }
 
         function updateUI() {
-            const container = document.getElementById('playersContainer');
-            container.innerHTML = "";
+            const slicesContainer = document.getElementById('slicesContainer');
+            const playersContainer = document.getElementById('playersContainer');
+            slicesContainer.innerHTML = "";
+            playersContainer.innerHTML = "";
 
             const N = state.players.length;
             const angleStep = 360 / N;
 
-            // Find blue player index to calculate pot rotation offset so it faces Blue
+            // Find blue player index to calculate pot rotation offset so it always faces Blue
             let blueIndex = state.players.findIndex(p => p.id === 2);
             if (blueIndex === -1) blueIndex = 1;
             let blueAngle = blueIndex * angleStep;
 
-            // Rotate central pot so it faces the Blue player's position, PLUS 180 deg to flip it upside down
             const centralArena = document.getElementById('centralArena');
             centralArena.style.transform = `translate(-50%, -50%) rotate(${blueAngle + 180}deg)`;
 
             let allReady = N > 0 && state.players.every(p => p.ready);
 
             state.players.forEach((p, index) => {
+                let theme = TEAM_THEMES[index % TEAM_THEMES.length];
+
+                // 1. Create Pizza Sector Slice using CSS conic-gradient or rotated block
+                let sliceDiv = document.createElement('div');
+                sliceDiv.className = 'slice';
+                let startAngle = index * angleStep - 90 - (angleStep / 2);
+                let endAngle = startAngle + angleStep;
+                
+                sliceDiv.style.background = theme.bg;
+                sliceDiv.style.clipPath = `polygon(50% 50%, ${50 + 150 * Math.cos(startAngle * Math.PI / 180)}% ${50 + 150 * Math.sin(startAngle * Math.PI / 180)}%, ${50 + 150 * Math.cos(endAngle * Math.PI / 180)}% ${50 + 150 * Math.sin(endAngle * Math.PI / 180)}%)`;
+                slicesContainer.appendChild(sliceDiv);
+
+                // 2. Position player control box in the middle of their sector slice
                 let slotDiv = document.createElement('div');
-                slotDiv.className = `player-slot`;
+                slotDiv.className = 'player-slot';
 
-                let theme = THEMES[index % THEMES.length];
-                slotDiv.style.background = theme.bg;
-                slotDiv.style.borderBottom = `2px solid ${theme.border}`;
-
-                // Positioning around screen center using trigonometry
-                let angleDeg = index * angleStep - 90; // Start top
+                let angleDeg = index * angleStep - 90;
                 let angleRad = angleDeg * (Math.PI / 180);
                 
-                // Radius distance from screen center
-                let rx = window.innerWidth < 400 ? 32 : 36;
-                let ry = window.innerHeight < 700 ? 30 : 34;
+                let rx = window.innerWidth < 400 ? 30 : 33;
+                let ry = window.innerHeight < 700 ? 28 : 31;
 
                 let leftPct = 50 + rx * Math.cos(angleRad);
                 let topPct = 50 + ry * Math.sin(angleRad);
@@ -424,14 +478,10 @@
                 slotDiv.style.left = leftPct + '%';
                 slotDiv.style.top = topPct + '%';
 
-                // Outward facing rotation: point outwards from center (+90 deg)
                 let outwardRotation = angleDeg + 90;
-                
-                // FLIP EVERYTHING EXCEPT RED (Player ID 1)
                 if (p.id !== 1) {
                     outwardRotation += 180;
                 }
-
                 slotDiv.style.transform = `translate(-50%, -50%) rotate(${outwardRotation}deg)`;
 
                 let deleteBtnHtml = !p.fixed ? `<button class="btn-delete" onclick="removePlayer(${p.id})">X</button>` : '';
@@ -443,14 +493,14 @@
                     </div>
                     <div class="balance">$${p.balance}</div>
                     <div class="action-row">
-                        <button class="btn-action" style="background:${theme.btn}" ${allReady ? 'disabled' : ''} onclick="bet(${p.id}, 10)">10</button>
-                        <button class="btn-action" style="background:${theme.btn}" ${allReady ? 'disabled' : ''} onclick="bet(${p.id}, 50)">50</button>
-                        <button class="btn-action" style="background:${theme.btn}" ${allReady ? 'disabled' : ''} onclick="bet(${p.id}, 100)">100</button>
-                        <button class="btn-action" style="background:${theme.btn}" ${allReady ? 'disabled' : ''} onclick="takeBack(${p.id})">Back</button>
+                        <button class="btn-action" ${allReady ? 'disabled' : ''} onclick="bet(${p.id}, 10)">10</button>
+                        <button class="btn-action" ${allReady ? 'disabled' : ''} onclick="bet(${p.id}, 50)">50</button>
+                        <button class="btn-action" ${allReady ? 'disabled' : ''} onclick="bet(${p.id}, 100)">100</button>
+                        <button class="btn-action" ${allReady ? 'disabled' : ''} onclick="takeBack(${p.id})">Back</button>
                     </div>
-                    <button class="btn-ready ${p.ready ? 'ready' : ''}" style="${p.ready ? 'background:'+theme.btn : ''}" onclick="toggleReady(${p.id})">${p.ready ? 'Ready!' : 'Ready Up'}</button>
+                    <button class="btn-ready ${p.ready ? 'ready' : ''}" onclick="toggleReady(${p.id})">${p.ready ? 'Ready!' : 'Ready Up'}</button>
                 `;
-                container.appendChild(slotDiv);
+                playersContainer.appendChild(slotDiv);
             });
 
             document.getElementById('potAmount').innerText = '$' + state.pot;
@@ -458,9 +508,9 @@
 
             let potButtonsHtml = "";
             state.players.forEach(p => {
-                potButtonsHtml += `<button onclick="awardPot(${p.id})" style="background:${p.fixed && p.id===1?'#ff3b30':(p.fixed?'#007aff':'#ff9500')}; color:#fff;">${p.name.split(' ')[0]} Wins</button>`;
+                potButtonsHtml += `<button onclick="awardPot(${p.id})" style="background:${p.fixed && p.id===1?'#b91c1c':(p.fixed?'#1d4ed8':'#c2410c')}; color:#fff; font-weight:700;">${p.name.split(' ')[0]} Wins</button>`;
             });
-            potButtonsHtml += `<button onclick="tiePot()" style="background:#8e8e93; color:#fff;">Tie</button>`;
+            potButtonsHtml += `<button onclick="tiePot()" style="background:#4b5563; color:#fff; font-weight:700;">Tie</button>`;
             document.getElementById('potActionButtons').innerHTML = potButtonsHtml;
         }
 
