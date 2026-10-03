@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dynamic Polygon Bet Hub</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #0b0b0e;
+            color: #fff;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            position: relative;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Utility Header bar */
+        .utility-bar {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            z-index: 50;
+        }
+
+        .util-btn {
+            background: #2c2c2e;
+            color: #fff;
+            border: 1px solid #3a3a3c;
+            padding: 4px 8px;
+            font-size: 9px;
+            font-weight: 700;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .util-btn:active { background: #48484a; }
+
+        .timer-banner {
+            font-size: 9px;
+            color: #8e8e93;
+            background: rgba(255,255,255,0.07);
+            padding: 4px 6px;
+            border-radius: 4px;
+        }
+
+        /* Central Betting Arena / Pot */
+        .central-arena {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            background: #151518;
+            border: 2px solid #3a3a3c;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 30;
+            box-shadow: 0 0 25px rgba(0,0,0,0.9);
+            padding: 6px;
+            text-align: center;
+        }
+
+        .pot-title {
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #8e8e93;
+        }
+
+        .pot-amount {
+            font-size: 15px;
+            font-weight: 800;
+            color: #ffcc00;
+            margin: 1px 0 4px 0;
+        }
+
+        .pot-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .pot-actions button {
+            padding: 2px 4px;
+            font-size: 7px;
+            font-weight: 700;
+            border-radius: 3px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-add-player {
+            background: #34c759;
+            color: #fff;
+            margin-top: 3px;
+            width: 100%;
+            padding: 2px;
+            font-size: 7px;
+            font-weight: 700;
+            border-radius: 3px;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Dynamic Player Slot Containers */
+        .player-slot {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 6px;
+            width: 160px;
+            height: 125px;
+            border-radius: 10px;
+            z-index: 10;
+        }
+
+        .player-header {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 2px;
+        }
+
+        .player-name {
+            font-size: 10px;
+            font-weight: 600;
+            background: none;
+            border: none;
+            color: #fff;
+            text-align: center;
+            width: 80px;
+            border-bottom: 1px dashed transparent;
+        }
+        .player-name:focus { border-bottom: 1px dashed #fff; outline: none; }
+
+        .btn-delete {
+            background: #ff3b30;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            font-size: 7px;
+            padding: 1px 3px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .balance {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 3px;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 2px;
+            width: 100%;
+            margin-bottom: 3px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 4px 1px;
+            border-radius: 4px;
+            border: none;
+            font-size: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            background: #2c2c2e;
+            color: #fff;
+        }
+        .btn-action:active { opacity: 0.7; }
+        .btn-action:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .btn-ready {
+            width: 100%;
+            padding: 4px;
+            border-radius: 4px;
+            border: none;
+            font-size: 9px;
+            font-weight: 700;
+            cursor: pointer;
+            background: #3a3a3c;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="utility-bar">
+        <button class="util-btn" onclick="exportBackup()">Backup</button>
+        <button class="util-btn" onclick="importBackup()">Restore</button>
+        <div class="timer-banner" id="timerBanner">Refill: --:--:--</div>
+    </div>
+
+    <!-- Central Arena / Pot -->
+    <div class="central-arena" id="centralArena">
+        <div class="pot-title">Pot</div>
+        <div class="pot-amount" id="potAmount">$0</div>
+        <div class="pot-actions" id="potActionButtons"></div>
+        <button class="btn-add-player" id="addPlayerBtn" onclick="addPlayer()">+ Add Player</button>
+    </div>
+
+    <!-- Dynamic Slots Container -->
+    <div id="playersContainer"></div>
+
+    <script>
+        const THEMES = [
+            { bg: "linear-gradient(135deg, #3a1c1c 0%, #151518 100%)", border: "#ff3b30", btn: "#ff3b30" }, // Red (Player 1)
+            { bg: "linear-gradient(135deg, #1c2c3a 0%, #151518 100%)", border: "#007aff", btn: "#007aff" }, // Blue (Player 2)
+            { bg: "linear-gradient(135deg, #3a321c 0%, #151518 100%)", border: "#ff9500", btn: "#ff9500" }, // Custom 1
+            { bg: "linear-gradient(135deg, #1c3a27 0%, #151518 100%)", border: "#34c759", btn: "#34c759" }, // Custom 2
+            { bg: "linear-gradient(135deg, #2c1c3a 0%, #151518 100%)", border: "#af52de", btn: "#af52de" }  // Custom 3
+        ];
+
+        let state = {
+            players: [
+                { id: 1, name: "Red Player", balance: 1000, contributed: 0, ready: false, fixed: true },
+                { id: 2, name: "Blue Player", balance: 1000, contributed: 0, ready: false, fixed: true }
+            ],
+            pot: 0,
+            lastClaimedDate: ""
+        };
+
+        window.onload = function() {
+            loadState();
+            checkDailyRefill();
+            updateUI();
+            setInterval(updateTimerDisplay, 1000);
+        };
+
+        function saveState() {
+            try {
+                localStorage.setItem('dynamic_polygon_hub_state', JSON.stringify(state));
+            } catch(e) { console.error(e); }
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('dynamic_polygon_hub_state');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    state = { ...state, ...parsed };
+                } catch(e) { console.error(e); }
+            }
+        }
+
+        function getESTDate(date = new Date()) {
+            const options = { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            const parts = new Intl.DateTimeFormat('en-US', options).formatToParts(date);
+            let obj = {};
+            parts.forEach(p => { if (p.type !== 'literal') obj[p.type] = parseInt(p.value, 10); });
+            return obj;
+        }
+
+        function getESTTimestampForTime(estObj, targetHour, targetMinute) {
+            const targetStringString = `${estObj.year}-${String(estObj.month).padStart(2,'0')}-${String(estObj.day).padStart(2,'0')}T${String(targetHour).padStart(2,'0')}:${String(targetMinute).padStart(2,'0')}:00-05:00`;
+            let targetTime = new Date(targetStringString).getTime();
+            const checkEst = getESTDate(new Date(targetTime));
+            if (checkEst.hour !== targetHour) {
+                const targetStringStringEDT = `${estObj.year}-${String(estObj.month).padStart(2,'0')}-${String(estObj.day).padStart(2,'0')}T${String(targetHour).padStart(2,'0')}:${String(targetMinute).padStart(2,'0')}:00-04:00`;
+                targetTime = new Date(targetStringStringEDT).getTime();
+            }
+            return targetTime;
+        }
+
+        function checkDailyRefill() {
+            const estNow = getESTDate();
+            const currentMinutesFromMidnight = estNow.hour * 60 + estNow.minute;
+            const refillMinutesFromMidnight = 8 * 60 + 15;
+            let activeCycleDateKey = "";
+
+            let baseDate = new Date();
+            if (currentMinutesFromMidnight < refillMinutesFromMidnight) {
+                let yesterday = new Date(baseDate.getTime() - 24 * 60 * 60 * 1000);
+                let estYesterday = getESTDate(yesterday);
+                activeCycleDateKey = `${estYesterday.year}-${estYesterday.month}-${estYesterday.day}`;
+            } else {
+                activeCycleDateKey = `${estNow.year}-${estNow.month}-${estNow.day}`;
+            }
+
+            if (state.lastClaimedDate !== activeCycleDateKey) {
+                if (state.lastClaimedDate !== undefined && state.lastClaimedDate !== "") {
+                    state.players.forEach(p => p.balance += 1000);
+                }
+                state.lastClaimedDate = activeCycleDateKey;
+                saveState();
+            }
+        }
+
+        function updateTimerDisplay() {
+            const estNow = getESTDate();
+            const currentMinutesFromMidnight = estNow.hour * 60 + estNow.minute;
+            const refillMinutesFromMidnight = 8 * 60 + 15;
+            let baseDate = new Date();
+            let targetRefillTime = (currentMinutesFromMidnight < refillMinutesFromMidnight) ? 
+                getESTTimestampForTime(estNow, 8, 15) : 
+                getESTTimestampForTime(getESTDate(new Date(baseDate.getTime() + 24 * 60 * 60 * 1000)), 8, 15);
+
+            let timeLeft = targetRefillTime - Date.now();
+            if (timeLeft <= 0) { checkDailyRefill(); timeLeft = 0; }
+
+            const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+            const minutes = Math.floor((timeLeft / 1000 / 60) % 60);
+            const seconds = Math.floor((timeLeft / 1000) % 60);
+
+            document.getElementById('timerBanner').innerText = 
+                `Refill @ 8:15: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function exportBackup() {
+            let dataString = state.players.map(p => `${p.name}:$${p.balance}`).join(',');
+            prompt("Your current player balances backup code:", dataString);
+        }
+
+        function importBackup() {
+            const input = prompt("Enter backup string (e.g. Red Player:$1200,Blue Player:$800):");
+            if (input) {
+                try {
+                    let parts = input.split(',');
+                    parts.forEach(part => {
+                        let sub = part.split(':');
+                        if (sub.length === 2) {
+                            let pName = sub[0].trim();
+                            let pVal = parseInt(sub[1].replace('$', ''), 10);
+                            let found = state.players.find(p => p.name === pName);
+                            if (found && !isNaN(pVal)) found.balance = pVal;
+                        }
+                    });
+                    saveState();
+                    updateUI();
+                    alert("Balances restored!");
+                } catch(e) { alert("Invalid format."); }
+            }
+        }
+
+        function addPlayer() {
+            if (state.players.length >= 5) return;
+            const newId = Date.now();
+            state.players.push({
+                id: newId,
+                name: `Player ${state.players.length + 1}`,
+                balance: 1000,
+                contributed: 0,
+                ready: false,
+                fixed: false
+            });
+            saveState();
+            updateUI();
+        }
+
+        function removePlayer(id) {
+            let idx = state.players.findIndex(p => p.id === id);
+            if (idx === -1 || state.players[idx].fixed) return;
+
+            let p = state.players.find(x => x.id === id);
+            if (p.contributed > 0) {
+                p.balance += p.contributed;
+                state.pot -= p.contributed;
+            }
+
+            state.players.splice(idx, 1);
+            saveState();
+            updateUI();
+        }
+
+        function updateUI() {
+            const container = document.getElementById('playersContainer');
+            container.innerHTML = "";
+
+            const N = state.players.length;
+            const angleStep = 360 / N;
+
+            // Find blue player index to calculate pot rotation offset so it always faces Blue
+            let blueIndex = state.players.findIndex(p => p.id === 2);
+            if (blueIndex === -1) blueIndex = 1;
+            let blueAngle = blueIndex * angleStep;
+
+            // Rotate central pot so it faces the Blue player's position
+            const centralArena = document.getElementById('centralArena');
+            centralArena.style.transform = `translate(-50%, -50%) rotate(${blueAngle}deg)`;
+
+            let allReady = N > 0 && state.players.every(p => p.ready);
+
+            state.players.forEach((p, index) => {
+                let slotDiv = document.createElement('div');
+                slotDiv.className = `player-slot`;
+
+                let theme = THEMES[index % THEMES.length];
+                slotDiv.style.background = theme.bg;
+                slotDiv.style.borderBottom = `2px solid ${theme.border}`;
+
+                // Positioning around screen center using trigonometry
+                let angleDeg = index * angleStep - 90; // Start top
+                let angleRad = angleDeg * (Math.PI / 180);
+                
+                // Radius distance from screen center
+                let rx = window.innerWidth < 400 ? 32 : 36; // percentage offset
+                let ry = window.innerHeight < 700 ? 30 : 34;
+
+                let leftPct = 50 + rx * Math.cos(angleRad);
+                let topPct = 50 + ry * Math.sin(angleRad);
+
+                slotDiv.style.left = leftPct + '%';
+                slotDiv.style.top = topPct + '%';
+
+                // Outward facing rotation: point outwards from center (+90 deg)
+                let outwardRotation = angleDeg + 90;
+                slotDiv.style.transform = `translate(-50%, -50%) rotate(${outwardRotation}deg)`;
+
+                let deleteBtnHtml = !p.fixed ? `<button class="btn-delete" onclick="removePlayer(${p.id})">X</button>` : '';
+
+                slotDiv.innerHTML = `
+                    <div class="player-header">
+                        <input type="text" class="player-name" value="${p.name}" onchange="updateName(${p.id}, this.value)">
+                        ${deleteBtnHtml}
+                    </div>
+                    <div class="balance">$${p.balance}</div>
+                    <div class="action-row">
+                        <button class="btn-action" style="background:${theme.btn}" ${allReady ? 'disabled' : ''} onclick="bet(${p.id}, 10)">10</button>
+                        <button class="btn-action" style="background:${theme.btn}" ${allReady ? 'disabled' : ''} onclick="bet(${p.id}, 50)">50</button>
+                        <button class="btn-action" style="background:${theme.btn}" ${allReady ? 'disabled' : ''} onclick="bet(${p.id}, 100)">100</button>
+                        <button class="btn-action" style="background:${theme.btn}" ${allReady ? 'disabled' : ''} onclick="takeBack(${p.id})">Back</button>
+                    </div>
+                    <button class="btn-ready ${p.ready ? 'ready' : ''}" style="${p.ready ? 'background:'+theme.btn : ''}" onclick="toggleReady(${p.id})">${p.ready ? 'Ready!' : 'Ready Up'}</button>
+                `;
+                container.appendChild(slotDiv);
+            });
+
+            document.getElementById('potAmount').innerText = '$' + state.pot;
+            document.getElementById('addPlayerBtn').style.display = (N < 5) ? 'block' : 'none';
+
+            let potButtonsHtml = "";
+            state.players.forEach(p => {
+                potButtonsHtml += `<button onclick="awardPot(${p.id})" style="background:${p.fixed && p.id===1?'#ff3b30':(p.fixed?'#007aff':'#ff9500')}; color:#fff;">${p.name.split(' ')[0]} Wins</button>`;
+            });
+            potButtonsHtml += `<button onclick="tiePot()" style="background:#8e8e93; color:#fff;">Tie</button>`;
+            document.getElementById('potActionButtons').innerHTML = potButtonsHtml;
+        }
+
+        function updateName(id, val) {
+            let p = state.players.find(x => x.id === id);
+            if (p) { p.name = val; saveState(); }
+        }
+
+        function toggleReady(id) {
+            let p = state.players.find(x => x.id === id);
+            if (p) { p.ready = !p.ready; saveState(); updateUI(); }
+        }
+
+        function bet(id, amount) {
+            if (state.players.every(p => p.ready)) return;
+            let p = state.players.find(x => x.id === id);
+            if (p && p.balance >= amount) {
+                p.balance -= amount;
+                p.contributed += amount;
+                state.pot += amount;
+                saveState();
+                updateUI();
+            }
+        }
+
+        function takeBack(id) {
+            if (state.players.every(p => p.ready)) return;
+            let p = state.players.find(x => x.id === id);
+            if (p && p.contributed > 0) {
+                let amt = p.contributed;
+                p.balance += amt;
+                state.pot -= amt;
+                p.contributed = 0;
+                saveState();
+                updateUI();
+            }
+        }
+
+        function awardPot(winnerId) {
+            if (state.pot <= 0) return;
+            let winner = state.players.find(x => x.id === winnerId);
+            if (winner) {
+                winner.balance += state.pot;
+            }
+            resetRound();
+        }
+
+        function tiePot() {
+            if (state.pot <= 0) return;
+            let totalContributed = 0;
+            state.players.forEach(p => {
+                p.balance += p.contributed;
+                totalContributed += p.contributed;
+            });
+            let remainder = state.pot - totalContributed;
+            if (remainder > 0 && state.players.length > 0) {
+                let share = Math.floor(remainder / state.players.length);
+                state.players.forEach(p => p.balance += share);
+            }
+            resetRound();
+        }
+
+        function resetRound() {
+            state.pot = 0;
+            state.players.forEach(p => {
+                p.contributed = 0;
+                p.ready = false;
+            });
+            saveState();
+            updateUI();
+        }
+    </script>
+</body>
+</html>
