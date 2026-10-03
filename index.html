@@ -391,14 +391,14 @@
             const N = state.players.length;
             const angleStep = 360 / N;
 
-            // Find blue player index to calculate pot rotation offset so it always faces Blue
+            // Find blue player index to calculate pot rotation offset so it faces Blue
             let blueIndex = state.players.findIndex(p => p.id === 2);
             if (blueIndex === -1) blueIndex = 1;
             let blueAngle = blueIndex * angleStep;
 
-            // Rotate central pot so it faces the Blue player's position
+            // Rotate central pot so it faces the Blue player's position, PLUS 180 deg to flip it upside down
             const centralArena = document.getElementById('centralArena');
-            centralArena.style.transform = `translate(-50%, -50%) rotate(${blueAngle}deg)`;
+            centralArena.style.transform = `translate(-50%, -50%) rotate(${blueAngle + 180}deg)`;
 
             let allReady = N > 0 && state.players.every(p => p.ready);
 
@@ -415,7 +415,7 @@
                 let angleRad = angleDeg * (Math.PI / 180);
                 
                 // Radius distance from screen center
-                let rx = window.innerWidth < 400 ? 32 : 36; // percentage offset
+                let rx = window.innerWidth < 400 ? 32 : 36;
                 let ry = window.innerHeight < 700 ? 30 : 34;
 
                 let leftPct = 50 + rx * Math.cos(angleRad);
@@ -426,6 +426,12 @@
 
                 // Outward facing rotation: point outwards from center (+90 deg)
                 let outwardRotation = angleDeg + 90;
+                
+                // FLIP EVERYTHING EXCEPT RED (Player ID 1)
+                if (p.id !== 1) {
+                    outwardRotation += 180;
+                }
+
                 slotDiv.style.transform = `translate(-50%, -50%) rotate(${outwardRotation}deg)`;
 
                 let deleteBtnHtml = !p.fixed ? `<button class="btn-delete" onclick="removePlayer(${p.id})">X</button>` : '';
